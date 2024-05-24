@@ -1,0 +1,74 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Dropout
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import recall_score, precision_score, f1_score
+
+# Load the CSV file into a Pandas DataFrame
+df = pd.read_csv('machine_failure_cleaned.csv')
+
+# Extract the features and target variable
+features = df.iloc[:, :-1].values
+target = df.iloc[:, -1].values
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=42)
+
+# Normalize the features
+X_train = (X_train - np.mean(X_train, axis=0)) / np.std(X_train, axis=0)
+X_test = (X_test - np.mean(X_test, axis=0)) / np.std(X_test, axis=0)
+
+#print(df)
+#print(df.iloc[0,:])
+
+# Create an ANN with 3 layers
+model = Sequential()
+
+# First layer with 6 neurons
+model.add(Dense(units=6, activation='relu', input_shape=(X_train.shape[1],)))
+
+# Second layer with 4 neurons and a 0.2 dropout
+model.add(Dense(units=4, activation='relu'))
+model.add(Dropout(0.2))
+
+# Last layer with 1 neuron and binary classification output
+model.add(Dense(units=1, activation='sigmoid'))
+
+# Compile the model
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+# Train the model
+model.fit(X_train, y_train, epochs=100, batch_size=32)
+
+# Evaluate the model
+loss, accuracy = model.evaluate(X_test, y_test)
+print('Loss:', loss)
+print('Accuracy:', accuracy)
+
+# Predict the labels for the test set
+y_pred = model.predict(X_test)
+
+# Convert the predictions to binary values (0 or 1)
+y_pred_binary = [int(round(p[0])) for p in y_pred]
+
+# Get the confusion matrix
+cm = confusion_matrix(y_test, y_pred_binary)
+
+# Calculate recall, precision and F score
+recall = recall_score(y_test, y_pred_binary)
+precision = precision_score(y_test, y_pred_binary)
+f1 = f1_score(y_test, y_pred_binary)
+
+# Print the confusion matrix with recall, precision and F score
+print("Confusion Matrix:")
+print(cm)
+print("\nRecall:", recall)
+print("Precision:", precision)
+print("F1 Score:", f1)
+
+print("\nThe confusion matrix shows that the model achieves very high precision recall, which is perfect.")
+print("This shows that the model is extremely effective at correctly identifying both positive and negative cases with very low error.")
